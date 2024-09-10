@@ -6,7 +6,7 @@ import (
 )
 
 type GGCaptcha interface {
-	GenerateGGCaptcha() (id, content string, err error)
+	GenerateGGCaptcha() (id, content, answer string, err error)
 	VerifyGGCaptcha(id, answer string, clear bool) bool
 }
 type Store interface {
