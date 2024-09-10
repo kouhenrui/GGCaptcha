@@ -54,12 +54,22 @@ func (r *RediStore) Get(id string, clear bool) (string, error) {
 	return value, nil
 }
 func (r *RediStore) Verify(id, answer string, clear bool) bool {
-	value, err := r.Get(id, clear)
+	if r.Exist(id) {
+		value, err := r.Get(id, clear)
+		if err != nil {
+			return false
+		}
+		if answer == value {
+			return true
+		}
+		return false
+	}
+	return false
+}
+func (r *RediStore) Exist(id string) bool {
+	_, err := r.store.Exists(context.TODO(), id).Result()
 	if err != nil {
 		return false
 	}
-	if answer == value {
-		return true
-	}
-	return false
+	return true
 }

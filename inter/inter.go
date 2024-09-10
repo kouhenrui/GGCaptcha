@@ -11,11 +11,12 @@ type GGCaptcha interface {
 }
 type Store interface {
 	Set(id string, value string, t time.Duration) error
+	Exist(id string) bool
 	Get(id string, clear bool) (string, error)
 	Verify(id, answer string, clear bool) bool
 }
 type Driver interface {
-	GenerateDriverString() (q, a string, err error)
+	GenerateDriverString() (content, answer string, err error)
 }
 
 // Item is captcha item inter
