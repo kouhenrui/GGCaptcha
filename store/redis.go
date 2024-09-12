@@ -9,7 +9,7 @@ import (
 )
 
 type RediStore struct {
-	store *redis.Client
+	Store *redis.Client
 }
 type RedisOptions struct {
 	Host     string
@@ -33,20 +33,20 @@ func NewRediStore(option RedisOptions) *RediStore {
 		log.Printf("redis connect times over %v,please check %v\n", option.MaxRetry, err.Error())
 		panic(fmt.Sprintf("redis connect error,get fauiler %v", err.Error()))
 	}
-	return &RediStore{store: redisClients}
+	return &RediStore{Store: redisClients}
 }
 func (r *RediStore) Set(id string, value string, t time.Duration) error {
-	return r.store.Set(context.TODO(), id, []byte(value), t).Err()
+	return r.Store.Set(context.TODO(), id, []byte(value), t).Err()
 }
 
 func (r *RediStore) Get(id string, clear bool) (string, error) {
-	err := r.store.Exists(context.TODO(), id).Err()
+	err := r.Store.Exists(context.TODO(), id).Err()
 	if err != nil {
 		return "", err
 	}
-	value, err := r.store.Get(context.TODO(), id).Result()
+	value, err := r.Store.Get(context.TODO(), id).Result()
 	if clear {
-		err = r.store.Del(context.TODO(), id).Err()
+		err = r.Store.Del(context.TODO(), id).Err()
 		if err != nil {
 			return "", err
 		}
@@ -67,7 +67,7 @@ func (r *RediStore) Verify(id, answer string, clear bool) bool {
 	return false
 }
 func (r *RediStore) Exist(id string) bool {
-	_, err := r.store.Exists(context.TODO(), id).Result()
+	_, err := r.Store.Exists(context.TODO(), id).Result()
 	if err != nil {
 		return false
 	}

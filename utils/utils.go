@@ -1,19 +1,60 @@
 package utils
 
 import (
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
 	"image/color"
+	"log"
 	"math/rand"
+	"os"
 	"time"
 )
 
+// 加载字体
+func LoadDefaultFontFace() font.Face {
+	// 使用 Go 自带的字体，也可以使用本地字体文件
+	ttf, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		panic(err)
+	}
+	face, err := opentype.NewFace(ttf, &opentype.FaceOptions{
+		Size:    20,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	return face
+}
+func LoadFont(fontPath string, sizePoint float64) font.Face {
+	// 读取自定义字体文件
+	fontBytes, err := os.ReadFile(fontPath)
+	if err != nil {
+		log.Fatalf("读取字体文件失败: %v", err)
+		//panic(err)
+	}
+
+	// 解析字体文件
+	ttf, err := truetype.Parse(fontBytes)
+	if err != nil {
+		log.Fatalf("解析字体文件失败: %v", err)
+	}
+
+	// 创建字体 Face
+	face := truetype.NewFace(ttf, &truetype.Options{
+		Size:    sizePoint,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	return face
+}
 func RandStr(n int) (randStr string) {
 	chars := "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
 	charsLen := len(chars)
 	if n > 10 {
 		n = 10
 	}
-
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 	for i := 0; i < n; i++ {
 		randIndex := rand.Intn(charsLen)
 		randStr += chars[randIndex : randIndex+1]

@@ -5,10 +5,15 @@ import (
 	"bytes"
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
-	"golang.org/x/image/font/gofont/goregular"
-	"golang.org/x/image/font/opentype"
+	"image"
 	"image/color"
+	"image/jpeg"
+	"image/png"
+	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Img struct {
@@ -17,31 +22,105 @@ type Img struct {
 	NoiseCount   int         //干扰线
 	Count        int         //验证码数量
 	Source       string      //数据源
-	SourceLength int         //s=数据源长度
+	SourceLength int         //数据源长度
 	SizePoint    float64     //字体大小
-	bgcolor      color.NRGBA //背景颜色
+	Bgcolor      color.NRGBA //背景颜色
 	FontStyle    font.Face   //字体
+	UploadImg    image.Image
 }
 
+type ImgOptions struct {
+	Height       int         //图片高度
+	Width        int         //图片宽度
+	NoiseCount   int         //干扰线
+	Count        int         //验证码数量
+	Source       string      //数据源
+	SourceLength int         //数据源长度
+	SizePoint    float64     //字体大小
+	Bgcolor      color.NRGBA //背景颜色
+	FontStyle    font.Face   //字体
+	UploadImg    image.Image
+}
+
+func defaultImg() Img {
+	return Img{
+		Height:       60,
+		Width:        120,
+		Count:        4,
+		SizePoint:    20,
+		NoiseCount:   4,
+		Source:       "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789",
+		SourceLength: len("ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"),
+		Bgcolor:      utils.RandColorRGBA(255),
+		FontStyle:    utils.LoadDefaultFontFace(),
+		UploadImg:    nil,
+	}
+}
+
+func LoadLocalImg(imgPath string) Img {
+	// 打开图片文件
+	file, err := os.Open(imgPath)
+	if err != nil {
+		log.Fatalf("无法打开图片文件: %v", err)
+	}
+	defer file.Close()
+	var img image.Image
+	// 获取文件扩展名，判断图片格式
+	ext := strings.ToLower(filepath.Ext(imgPath))
+	switch ext {
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(file)
+		if err != nil {
+			log.Fatalf("JPEG 解码失败: %v", err)
+		}
+	case ".png":
+		img, err = png.Decode(file)
+		if err != nil {
+			log.Fatalf("PNG 解码失败: %v", err)
+		}
+	default:
+		log.Fatalf("不支持的图片格式: %s", ext)
+	}
+	return Img{UploadImg: img}
+}
 func NewDriverString(imgOptions ...Img) *Img {
-	var img Img
+	var i Img
 	if len(imgOptions) < 1 {
-		img.Height = 60
-		img.Width = 120
-		img.Count = 4
-		img.SizePoint = 20
-		img.NoiseCount = 4
-		img.Source = "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"
-		img.SourceLength = len(img.Source)
-		img.bgcolor = utils.RandColorRGBA(255)
-		img.FontStyle = loadFontFace(img.SizePoint)
+		i = defaultImg()
 	} else {
-		img = imgOptions[0]
+		// 使用传入的自定义配置
+		i = imgOptions[0]
+
+		//// 如果没有设置某些字段，则为其提供默认值
+		//if i.Height == 0 {
+		//	i.Height = 60
+		//}
+		//if i.Width == 0 {
+		//	i.Width = 120
+		//}
+		//if i.Count == 0 {
+		//	i.Count = 4
+		//}
+		//if i.SizePoint == 0 {
+		//	i.SizePoint = 20
+		//}
+		//if i.NoiseCount == 0 {
+		//	i.NoiseCount = 4
+		//}
+		//if i.Source == "" {
+		//	i.Source = "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"
+		//	i.SourceLength = len(i.Source)
+		//}
+		//if i.Bgcolor == (color.NRGBA{}) {
+		//	i.Bgcolor = utils.RandColorRGBA(255)
+		//}
+		//if i.FontStyle == nil {
+		//	i.FontStyle = utils.LoadFontFace(i.SizePoint)
+		//}
 	}
 
-	return &img
+	return &i
 }
-
 func (m *Img) GenerateDriverString() (content, answer string, err error) {
 	dc := gg.NewContext(m.Width, m.Height)
 	bgR, bgG, bgB, bgA := utils.RandColorRange(100, 255)
@@ -58,21 +137,6 @@ func (m *Img) GenerateDriverString() (content, answer string, err error) {
 	}
 	content = buffer.String()
 	return content, textPlain, nil
-}
-
-// 加载字体
-func loadFontFace(sizePoint float64) font.Face {
-	// 使用 Go 自带的字体，也可以使用本地字体文件
-	ttf, err := opentype.Parse(goregular.TTF)
-	if err != nil {
-		panic(err)
-	}
-	face, err := opentype.NewFace(ttf, &opentype.FaceOptions{
-		Size:    sizePoint,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
-	return face
 }
 
 /*
@@ -126,4 +190,12 @@ func (m *Img) writeText(dc *gg.Context, text string) {
 		dc.Stroke()
 	}
 
+}
+
+func GenerateDriverImage(im image.Image) {
+	gg.NewContextForImage(im)
+
+}
+func GenerateDriverRGBA(im *image.RGBA) {
+	gg.NewContextForRGBA(im)
 }

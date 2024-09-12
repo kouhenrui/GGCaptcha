@@ -1,13 +1,11 @@
 package ggs
 
 import (
-	"GGCaptcha/img"
-	"GGCaptcha/store"
 	"testing"
 )
 
 func TestNewGGCaptcha(t *testing.T) {
-	driver := img.NewDriverString()
+	driver := NewDriverString()
 	//redisOption := store.RedisOptions{
 	//	Host:     "192.168.245.22",
 	//	Port:     "6379",
@@ -16,7 +14,7 @@ func TestNewGGCaptcha(t *testing.T) {
 	//	MaxRetry: 5,
 	//}
 	//redisStore := store.NewRediStore(redisOption)
-	localStore := store.NewLocalStore()
+	localStore := NewLocalStore()
 	ggcaptcha := NewGGCaptcha(driver, localStore)
 	id, _, answer, err := ggcaptcha.GenerateGGCaptcha()
 	if err != nil {
