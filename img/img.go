@@ -3,6 +3,7 @@ package img
 import (
 	"GGCaptcha/utils"
 	"bytes"
+	"encoding/base64"
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
 	"image"
@@ -17,14 +18,15 @@ import (
 )
 
 type Img struct {
-	Height       int         //图片高度
-	Width        int         //图片宽度
-	NoiseCount   int         //干扰线
-	Count        int         //验证码数量
-	Source       string      //数据源
-	SourceLength int         //数据源长度
+	Height       int    //图片高度
+	Width        int    //图片宽度
+	NoiseCount   int    //干扰线
+	Count        int    //验证码数量
+	Source       string //数据源
+	SourceLength int    //数据源长度
+	FontColor    color.Color
 	SizePoint    float64     //字体大小
-	Bgcolor      color.NRGBA //背景颜色
+	BgColor      color.NRGBA //背景颜色
 	FontStyle    font.Face   //字体
 	UploadImg    image.Image
 }
@@ -43,20 +45,40 @@ type ImgOptions struct {
 }
 
 func defaultImg() Img {
+	var height = 80                                                           // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
+	var width = 240                                                           // 宽度设置为240像素，适合4-6个字符的验证码
+	var noiseCount = 5                                                        // 5条干扰线，增强防破解性，但不影响阅读
+	var count = 5                                                             // 验证码字符数量设置为5个，平衡安全性和用户友好性
+	var source = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789" // 排除容易混淆的字符如 'O', '0', 'I', 'l'
+	var sourceLength = len(source)                                            // 数据源字符长度
+	var sizePoint = float64(height) * 0.6                                     // 字体大小设置为36，保证字符清晰度
+	var fontColor = utils.RandColorRGBA(255)
+	var bgColor = utils.RandColorRGBA(255)
+	var fontStyle = utils.LoadDefaultFontFace()
+
 	return Img{
-		Height:       60,
-		Width:        120,
-		Count:        4,
-		SizePoint:    20,
-		NoiseCount:   4,
-		Source:       "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789",
-		SourceLength: len("ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"),
-		Bgcolor:      utils.RandColorRGBA(255),
-		FontStyle:    utils.LoadDefaultFontFace(),
+		Height:       height,             // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
+		Width:        width,              // 宽度设置为240像素，适合4-6个字符的验证码
+		NoiseCount:   noiseCount,         // 5条干扰线，增强防破解性，但不影响阅读
+		Count:        count,              // 验证码字符数量设置为5个，平衡安全性和用户友好性
+		Source:       source,             // 排除容易混淆的字符如 'O', '0', 'I', 'l'
+		SourceLength: sourceLength,       // 数据源字符长度
+		SizePoint:    float64(sizePoint), // 字体大小设置为36，保证字符清晰度
+		FontColor:    fontColor,
+		BgColor:      bgColor,
+		FontStyle:    fontStyle,
 		UploadImg:    nil,
 	}
 }
 
+/*
+ * @Title
+ * @Description load local img as background picture
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
 func LoadLocalImg(imgPath string) Img {
 	// 打开图片文件
 	file, err := os.Open(imgPath)
@@ -90,52 +112,67 @@ func NewDriverString(imgOptions ...Img) *Img {
 	} else {
 		// 使用传入的自定义配置
 		i = imgOptions[0]
-
-		//// 如果没有设置某些字段，则为其提供默认值
-		//if i.Height == 0 {
-		//	i.Height = 60
-		//}
-		//if i.Width == 0 {
-		//	i.Width = 120
-		//}
-		//if i.Count == 0 {
-		//	i.Count = 4
-		//}
-		//if i.SizePoint == 0 {
-		//	i.SizePoint = 20
-		//}
-		//if i.NoiseCount == 0 {
-		//	i.NoiseCount = 4
-		//}
-		//if i.Source == "" {
-		//	i.Source = "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"
-		//	i.SourceLength = len(i.Source)
-		//}
-		//if i.Bgcolor == (color.NRGBA{}) {
-		//	i.Bgcolor = utils.RandColorRGBA(255)
-		//}
-		//if i.FontStyle == nil {
-		//	i.FontStyle = utils.LoadFontFace(i.SizePoint)
-		//}
+		//log.Println(i, "打印参数")
+		// 如果没有设置某些字段，则为其提供默认值
+		if i.Height == 0 {
+			i.Height = 60
+		}
+		if i.Width == 0 {
+			i.Width = 120
+		}
+		if i.Count == 0 {
+			i.Count = 4
+		}
+		if i.SizePoint == 0 {
+			i.SizePoint = 20
+		}
+		if i.NoiseCount == 0 {
+			i.NoiseCount = 4
+		}
+		if i.Source == "" {
+			i.Source = "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789"
+			i.SourceLength = len(i.Source)
+		}
+		if i.BgColor == (color.NRGBA{}) {
+			i.BgColor = utils.RandColorRGBA(255)
+		}
+		if i.FontStyle == nil {
+			i.FontStyle = utils.LoadDefaultFontFace()
+		}
+		if i.FontColor == nil {
+			i.FontColor = utils.RandColorRGBA(255)
+		}
 	}
 
 	return &i
 }
 func (m *Img) GenerateDriverString() (content, answer string, err error) {
-	dc := gg.NewContext(m.Width, m.Height)
-	bgR, bgG, bgB, bgA := utils.RandColorRange(100, 255)
-	dc.SetRGBA255(bgR, bgG, bgB, bgA)
-	dc.Clear()
-	dc.SetFontFace(m.FontStyle)
+	//generate rand string
 	textPlain := utils.RandStr(m.Count)
-	m.writeText(dc, textPlain)
-	dc.Fill()
+
+	var dc *gg.Context
+	if m.UploadImg != nil {
+		log.Println("使用模版")
+		dc = gg.NewContextForImage(m.UploadImg)
+	} else {
+		dc = gg.NewContext(m.Width, m.Height)
+		bgR, bgG, bgB, bgA := utils.RandColorRange(100, 255)
+		dc.SetRGBA255(bgR, bgG, bgB, bgA)
+		dc.Clear()
+	}
+
+	dc.SetFontFace(m.FontStyle) //设置字体格式
+	dc.SetColor(m.FontColor)    //设置字体颜色
+	m.writeText(dc, textPlain)  //绘制验证码图片
+	m.interfereLine(dc)         //绘制干扰线
+	//dc.Fill()                   //填充图片
 	var buffer bytes.Buffer
+
 	err = dc.EncodePNG(&buffer)
 	if err != nil {
 		return "", "", err
 	}
-	content = buffer.String()
+	content = base64.StdEncoding.EncodeToString(buffer.Bytes())
 	return content, textPlain, nil
 }
 
@@ -176,26 +213,41 @@ func (m *Img) interfereLine(dc *gg.Context) {
  * @Date 2024/9/10
  */
 func (m *Img) writeText(dc *gg.Context, text string) {
-	for i := 0; i < m.SourceLength; i++ {
+	// 获取文字的字符数组
+	characters := []rune(text)
+	charCount := len(characters)
+	// 每个字符的水平间距
+	charSpacing := float64(m.Width) / float64(charCount+1)
+
+	for i := 0; i < charCount; i++ {
 		r, g, b, _ := utils.RandColor(100)
 		dc.SetRGBA255(r, g, b, 255)
-		x := float64(m.Width/m.SourceLength*i) + m.SizePoint*0.6
-		y := float64(m.Height / 2)
-		xfload := 5 - rand.Float64()*10 + x
-		yfload := 5 - rand.Float64()*10 + y
-		radians := 40 - rand.Float64()*80
-		dc.RotateAbout(gg.Radians(radians), x, y)
-		dc.DrawStringAnchored(text, xfload, yfload, 0.2, 0.5)
-		dc.RotateAbout(-1*gg.Radians(radians), x, y)
+
+		// 字符的x坐标，均匀分布
+		x := charSpacing * float64(i+1)
+
+		// 字符的y坐标，居中但带有轻微随机浮动
+		y := float64(m.Height) * 0.5
+		yfload := 5 - rand.Float64()*10 + y // 上下浮动5个像素
+
+		// 为字符增加随机旋转角度，增强干扰效果
+		rotation := (rand.Float64() * 30) - 15 // 每个字符随机旋转 -15 到 15 度
+		dc.RotateAbout(gg.Radians(rotation), x, y)
+
+		// 绘制字符到图片上，居中显示
+		dc.DrawStringAnchored(string(characters[i]), x, yfload, 0.5, 0.5)
+
+		// 恢复原来的旋转角度，避免影响后面的字符
+		dc.RotateAbout(gg.Radians(-rotation), x, y)
+		//x := float64(m.Width/m.SourceLength*i) + m.SizePoint*0.6
+		//y := float64(m.Height / 2)
+		//xfload := 5 - rand.Float64()*10 + x
+		//yfload := 5 - rand.Float64()*10 + y
+		//radians := 40 - rand.Float64()*80
+		//dc.RotateAbout(gg.Radians(radians), x, y)
+		//dc.DrawStringAnchored(text, xfload, yfload, 0.2, 0.5)
+		//dc.RotateAbout(-1*gg.Radians(radians), x, y)
 		dc.Stroke()
 	}
 
-}
-
-func GenerateDriverImage(im image.Image) {
-	gg.NewContextForImage(im)
-
-}
-func GenerateDriverRGBA(im *image.RGBA) {
-	gg.NewContextForRGBA(im)
 }

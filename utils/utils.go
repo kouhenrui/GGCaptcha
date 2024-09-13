@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
@@ -11,6 +12,31 @@ import (
 	"os"
 	"time"
 )
+
+/*
+ * @Title
+ * @Description 保存base64至本地
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+func SaveBase64(base, outPath string) error {
+	//if strings.Contains(base, "base64,") {
+	//	base = strings.Split(base, "base64,")[1]
+	//}
+	imgData, err := base64.StdEncoding.DecodeString(base)
+	if err != nil {
+		log.Fatalf("转存失败%s", err)
+		return err
+	}
+	err = os.WriteFile(outPath, imgData, 0644)
+	if err != nil {
+		log.Fatalf("写入文件失败%s", err)
+		return err
+	}
+	return nil
+}
 
 // 加载字体
 func LoadDefaultFontFace() font.Face {
