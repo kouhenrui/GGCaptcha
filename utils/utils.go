@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -74,6 +76,113 @@ func LoadFont(fontPath string, sizePoint float64) font.Face {
 	})
 	return face
 }
+
+// 随机算术
+func RandMath(n int) (expression string, answer string) {
+	rand.NewSource(time.Now().UnixNano())
+	// 初始化第一个数字
+	num := rand.Intn(10) + 1
+	expression = fmt.Sprintf("%d", num)
+	result := num
+
+	// 定义可用的运算符
+	operators := []string{"+", "-", "*", "/"}
+
+	for i := 1; i < n; i++ {
+		// 随机选择一个运算符
+		operator := operators[rand.Intn(4)]
+
+		// 随机选择一个数字
+		var nextNum int
+		if operator == "/" {
+			// 对于除法，确保能够整除
+			nextNum = rand.Intn(9) + 1 // 避免除数为0
+			// 确保除法不会导致负结果
+			if result < 0 {
+				nextNum = rand.Intn(9) + 1
+				result *= nextNum
+			}
+		} else {
+			nextNum = rand.Intn(9) + 1 // 避免为0
+		}
+
+		// 根据操作符更新结果
+		switch operator {
+		case "+":
+			result += nextNum
+		case "-":
+			// 确保减法后结果为非负数
+			if result-nextNum < 0 {
+				// 如果减法会导致负数，重新选择一个操作数
+				nextNum = result
+			}
+			result -= nextNum
+		case "*":
+			result *= nextNum
+		case "/":
+			// 仅在除法时更新结果
+			// 仅在除法时更新结果
+			if result%nextNum != 0 {
+				// 确保结果整除
+				result += nextNum - (result % nextNum)
+			}
+			result /= nextNum
+		}
+
+		// 构建表达式
+		expression += fmt.Sprintf("%s%d", operator, nextNum)
+	}
+
+	//// 确保除法后的结果是整数
+	//if len(expression) > 0 && expression[len(expression)-1] == '/' {
+	//	// 如果最后一个操作符是除法，修正结果
+	//	expression = expression[:len(expression)-1] // 移除最后的除法符号
+	//}
+
+	expression += "="
+	answer = strconv.Itoa(result)
+	return expression, answer
+}
+
+func RandMath2() (expression string, answer string) {
+	rand.NewSource(time.Now().UnixNano())
+	// 初始化第一个数字
+	num := rand.Intn(20) + 1
+	expression = fmt.Sprintf("%d", num)
+	result := num
+	// 定义可用的运算符
+	operators := []string{"+", "-", "*", "/"}
+	operator := operators[rand.Intn(len(operators))]
+	var nextNum = rand.Intn(20) + 1
+	if result < nextNum {
+		if operator == "/" {
+			// 仅在除法时更新结果
+			for result%nextNum != 0 {
+				nextNum--
+			}
+			//if result%nextNum != 0 {
+			//	select {
+			//		case result  +=1:
+			//		if result%nextNum == 0 {
+			//			break
+			//		}
+			//	}
+			//	// 确保结果整除
+			//	result += nextNum - (result % nextNum)
+			//}
+			result /= nextNum
+		}
+	}
+	result = nextNum
+	// 构建表达式
+	expression += fmt.Sprintf("%s%d", operator, nextNum)
+
+	expression += "="
+	answer = strconv.Itoa(result)
+	return expression, answer
+}
+
+// 随机字符
 func RandStr(n int) (randStr string) {
 	chars := "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
 	charsLen := len(chars)

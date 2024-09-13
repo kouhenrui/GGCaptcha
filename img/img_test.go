@@ -20,3 +20,12 @@ func TestImg_GenerateDriverString(t *testing.T) {
 	}
 	t.Logf(answer)
 }
+
+func TestImg_GenerateDriverMath(t *testing.T) {
+	driver := NewDriverString()
+	content, answer := driver.GenerateDriverMath()
+
+	t.Log(content, answer)
+	t.Logf("success")
+
+}

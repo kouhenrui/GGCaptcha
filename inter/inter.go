@@ -17,6 +17,9 @@ type Store interface {
 }
 type Driver interface {
 	GenerateDriverString() (content, answer string, err error)
+	GenerateDriverMathString() (content, answer string, err error)
+	GenerateDriverMath() (content, answer string)
+	GenerateDriverPuzzle() (bgImage string, puzzleImage string, targetX int, err error)
 }
 
 // Item is captcha item inter

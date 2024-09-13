@@ -4,6 +4,7 @@ import (
 	"GGCaptcha/utils"
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
 	"image"
@@ -29,6 +30,12 @@ type Img struct {
 	BgColor      color.NRGBA //背景颜色
 	FontStyle    font.Face   //字体
 	UploadImg    image.Image
+
+	MathNum      int //算术验证码数量
+	PuzzleX      int // 滑动拼图的X位置
+	PuzzleY      int // 滑动拼图的Y位置
+	PuzzleWidth  int // 拼图块的宽度
+	PuzzleHeight int // 拼图块的高度
 }
 
 type ImgOptions struct {
@@ -42,9 +49,15 @@ type ImgOptions struct {
 	Bgcolor      color.NRGBA //背景颜色
 	FontStyle    font.Face   //字体
 	UploadImg    image.Image
+
+	MathNum      int //算术验证码数量
+	PuzzleX      int // 滑动拼图的X位置
+	PuzzleY      int // 滑动拼图的Y位置
+	PuzzleWidth  int // 拼图块的宽度
+	PuzzleHeight int // 拼图块的高度
 }
 
-func defaultImg() Img {
+func DefaultImg() Img {
 	var height = 80                                                           // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
 	var width = 240                                                           // 宽度设置为240像素，适合4-6个字符的验证码
 	var noiseCount = 5                                                        // 5条干扰线，增强防破解性，但不影响阅读
@@ -55,7 +68,11 @@ func defaultImg() Img {
 	var fontColor = utils.RandColorRGBA(255)
 	var bgColor = utils.RandColorRGBA(255)
 	var fontStyle = utils.LoadDefaultFontFace()
-
+	var mathNum = 3                                 // 默认生成两个数字进行加减法
+	var puzzleWidth = width / 5                     // 拼图块占图片宽度的1/5
+	var puzzleHeight = height / 5                   // 拼图块占图片高度的1/5
+	var puzzleX = rand.Intn(width - width/5 - 10)   // 随机生成X坐标，预留边距
+	var puzzleY = rand.Intn(height - height/5 - 10) // 随机生成Y坐标，预留边距
 	return Img{
 		Height:       height,             // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
 		Width:        width,              // 宽度设置为240像素，适合4-6个字符的验证码
@@ -68,6 +85,12 @@ func defaultImg() Img {
 		BgColor:      bgColor,
 		FontStyle:    fontStyle,
 		UploadImg:    nil,
+		MathNum:      mathNum,      //算术验证码数量
+		PuzzleX:      puzzleWidth,  // 滑动拼图的X位置
+		PuzzleY:      puzzleHeight, // 滑动拼图的Y位置
+		PuzzleWidth:  puzzleX,      // 拼图块的宽度
+		PuzzleHeight: puzzleY,      // 拼图块的高度
+
 	}
 }
 
@@ -79,6 +102,7 @@ func defaultImg() Img {
  * @Author Acer
  * @Date 2024/9/13
  */
+
 func LoadLocalImg(imgPath string) Img {
 	// 打开图片文件
 	file, err := os.Open(imgPath)
@@ -108,7 +132,7 @@ func LoadLocalImg(imgPath string) Img {
 func NewDriverString(imgOptions ...Img) *Img {
 	var i Img
 	if len(imgOptions) < 1 {
-		i = defaultImg()
+		i = DefaultImg()
 	} else {
 		// 使用传入的自定义配置
 		i = imgOptions[0]
@@ -142,30 +166,52 @@ func NewDriverString(imgOptions ...Img) *Img {
 		if i.FontColor == nil {
 			i.FontColor = utils.RandColorRGBA(255)
 		}
+
+		if i.MathNum == 0 {
+			i.MathNum = 3
+		}
+		if i.PuzzleWidth == 0 {
+			i.PuzzleWidth = i.Width / 5
+		}
+		if i.PuzzleHeight == 0 {
+			i.PuzzleHeight = i.Height / 5
+		}
+		if i.PuzzleX == 0 {
+			i.PuzzleX = rand.Intn(i.Width - i.Width/5 - 10)
+		}
+		if i.PuzzleY == 0 {
+			i.PuzzleY = rand.Intn(i.Height - i.Height/5 - 10)
+		}
 	}
 
 	return &i
 }
+
+/*
+ * @Title
+ * @Description 根据默认值或图片地址生成验证码
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+
 func (m *Img) GenerateDriverString() (content, answer string, err error) {
 	//generate rand string
 	textPlain := utils.RandStr(m.Count)
 
 	var dc *gg.Context
 	if m.UploadImg != nil {
-		log.Println("使用模版")
 		dc = gg.NewContextForImage(m.UploadImg)
 	} else {
-		dc = gg.NewContext(m.Width, m.Height)
-		bgR, bgG, bgB, bgA := utils.RandColorRange(100, 255)
-		dc.SetRGBA255(bgR, bgG, bgB, bgA)
-		dc.Clear()
+		dc = m.makeBGColor()
 	}
 
 	dc.SetFontFace(m.FontStyle) //设置字体格式
 	dc.SetColor(m.FontColor)    //设置字体颜色
 	m.writeText(dc, textPlain)  //绘制验证码图片
 	m.interfereLine(dc)         //绘制干扰线
-	//dc.Fill()                   //填充图片
+	//dc.Fill()                   //填充填充路径的内部区域 和stroke方法合用
 	var buffer bytes.Buffer
 
 	err = dc.EncodePNG(&buffer)
@@ -174,6 +220,126 @@ func (m *Img) GenerateDriverString() (content, answer string, err error) {
 	}
 	content = base64.StdEncoding.EncodeToString(buffer.Bytes())
 	return content, textPlain, nil
+}
+
+/*
+ * @Title
+ * @Description
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+
+func (m *Img) GenerateDriverMathString() (content, answer string, err error) {
+	expression, result := utils.RandMath(m.MathNum)
+	var dc *gg.Context
+	if m.UploadImg != nil {
+		dc = gg.NewContextForImage(m.UploadImg)
+	} else {
+		dc = m.makeBGColor()
+	}
+
+	dc.SetFontFace(m.FontStyle) //设置字体格式
+	dc.SetColor(m.FontColor)    //设置字体颜色
+	m.writeText(dc, expression) //绘制验证码图片
+	m.interfereLine(dc)         //绘制干扰线
+	//dc.Fill()                   //填充填充路径的内部区域 和stroke方法合用
+	var buffer bytes.Buffer
+
+	err = dc.EncodePNG(&buffer)
+	if err != nil {
+		return "", "", err
+	}
+	content = base64.StdEncoding.EncodeToString(buffer.Bytes())
+	return content, result, nil
+}
+
+/*
+ * @Title
+ * @Description 生成纯运算符式验证码
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+
+func (m *Img) GenerateDriverMath() (content, answer string) {
+	expression, result := utils.RandMath(m.MathNum)
+	return expression, result
+}
+
+/*
+ * @Title
+ * @Description 生成滑动式验证码
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+
+func (m *Img) GenerateDriverPuzzle() (bgImage string, puzzleImage string, targetX int, err error) {
+	var dc *gg.Context
+	var puzzlePiece image.Image
+	if m.UploadImg != nil {
+		dc = gg.NewContextForImage(m.UploadImg)
+		puzzleRect := image.Rect(m.PuzzleX, m.PuzzleY, m.PuzzleX+m.PuzzleWidth, m.PuzzleY+m.PuzzleHeight)
+		puzzlePiece = m.UploadImg.(interface {
+			SubImage(r image.Rectangle) image.Image
+		}).SubImage(puzzleRect)
+
+	} else {
+		dc = m.puzzleString()
+		puzzleRect := image.Rect(m.PuzzleX, m.PuzzleY, m.PuzzleX+m.PuzzleWidth, m.PuzzleY+m.PuzzleHeight)
+		// 使用背景图生成拼图块
+		puzzlePiece = dc.Image().(interface {
+			SubImage(r image.Rectangle) image.Image
+		}).SubImage(puzzleRect)
+	}
+	// 绘制拼图块
+	dcPiece := gg.NewContextForImage(puzzlePiece)
+	var puzzleBuffer bytes.Buffer
+	err = dcPiece.EncodePNG(&puzzleBuffer)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("failed to encode puzzle piece: %w", err)
+	}
+	puzzleImage = base64.StdEncoding.EncodeToString(puzzleBuffer.Bytes())
+
+	// 在背景图上挖出拼图块
+	dc.SetRGBA(1, 1, 1, 1) // 设置填充为白色
+	dc.DrawRectangle(float64(m.PuzzleX), float64(m.PuzzleY), float64(m.PuzzleWidth), float64(m.PuzzleHeight))
+	dc.Fill()
+	// 转换背景图为 base64
+	var bgBuffer bytes.Buffer
+	err = dc.EncodePNG(&bgBuffer)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("failed to encode background image: %w", err)
+	}
+	bgImage = base64.StdEncoding.EncodeToString(bgBuffer.Bytes())
+
+	// 随机生成目标 X 位置
+	targetX = m.PuzzleX + rand.Intn(m.PuzzleWidth)
+
+	return bgImage, puzzleImage, targetX, nil
+}
+
+/*
+ * @Title
+ * @Description 生成模拟背景
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+func (m *Img) puzzleString() (dc *gg.Context) {
+	textPlain := utils.RandStr(m.Count)
+	dc = m.makeBGColor()
+	dc.SetFontFace(m.FontStyle) //设置字体格式
+	dc.SetColor(m.FontColor)    //设置字体颜色
+	m.writeText(dc, textPlain)  //绘制验证码图片
+	m.interfereLine(dc)         //绘制干扰线
+
+	return dc
 }
 
 /*
@@ -198,7 +364,7 @@ func (m *Img) interfereLine(dc *gg.Context) {
 			dc.SetRGBA255(r, g, b, a)
 			dc.SetLineWidth(w)
 			dc.DrawLine(x1, y1, x2, y2)
-			dc.Stroke()
+			dc.Stroke() //绘制轮廓
 		}
 	}
 
@@ -218,10 +384,9 @@ func (m *Img) writeText(dc *gg.Context, text string) {
 	charCount := len(characters)
 	// 每个字符的水平间距
 	charSpacing := float64(m.Width) / float64(charCount+1)
-
 	for i := 0; i < charCount; i++ {
-		r, g, b, _ := utils.RandColor(100)
-		dc.SetRGBA255(r, g, b, 255)
+		//r, g, b, _ := utils.RandColor(100)
+		//dc.SetRGBA255(r, g, b, 255)
 
 		// 字符的x坐标，均匀分布
 		x := charSpacing * float64(i+1)
@@ -248,6 +413,23 @@ func (m *Img) writeText(dc *gg.Context, text string) {
 		//dc.DrawStringAnchored(text, xfload, yfload, 0.2, 0.5)
 		//dc.RotateAbout(-1*gg.Radians(radians), x, y)
 		dc.Stroke()
-	}
 
+	}
+	dc.Clear()
+}
+
+/*
+ * @Title
+ * @Description 绘制背景板
+ * @Param
+ * @return
+ * @Author Acer
+ * @Date 2024/9/13
+ */
+func (m *Img) makeBGColor() (dc *gg.Context) {
+	dc = gg.NewContext(m.Width, m.Height) //设置图片大小
+	bgR, bgG, bgB, bgA := utils.RandColorRange(5, 255)
+	dc.SetRGBA255(bgR, bgG, bgB, bgA) //设置初始背景板颜色
+	dc.Clear()                        //将背景板填充为之前设置颜色
+	return dc
 }
