@@ -1,4 +1,4 @@
-module github.com/kouhenrui/GGCaptcha
+module	github.com/kouhenrui/GGCaptcha
 
 go 1.22.4
 
