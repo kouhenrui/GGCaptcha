@@ -29,3 +29,24 @@ func TestImg_GenerateDriverMath(t *testing.T) {
 	t.Logf("success")
 
 }
+
+func Test_GenerateDriverMathString(t *testing.T) {
+	driver := NewDriverString()
+	content, answer, err := driver.GenerateDriverMathString()
+	if err != nil {
+		t.Fatalf("生成滑动错误%s", err)
+	}
+	utils.SaveBase64(content, "1.jpg")
+	t.Log(answer)
+}
+
+func Test_GenerateDriverPuzzle(t *testing.T) {
+	driver := NewDriverString()
+	bgImage, puzzleImage, targetX, err := driver.GenerateDriverPuzzle()
+	if err != nil {
+		t.Fatalf("生成滑动错误%s", err)
+	}
+	utils.SaveBase64(bgImage, "1.jpg")
+	utils.SaveBase64(puzzleImage, "2.jpg")
+	t.Log(targetX)
+}

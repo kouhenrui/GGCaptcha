@@ -1,13 +1,23 @@
 package inter
 
 import (
-	"io"
 	"time"
 )
 
-type GGCaptcha interface {
-	GenerateGGCaptcha() (id, content, answer string, err error)
+type CaptchaType = string
+
+type GGCaptchator interface {
+	GenerateGGCaptcha() (id, content string, err error)
+
+	GenerateDriverMath() (id, content string, err error)
+
+	GenerateDriverMathString() (id, content string, err error)
+
+	GenerateDriverPuzzle() (id, bgImage, puzzleImage string, err error)
+
 	VerifyGGCaptcha(id, answer string, clear bool) bool
+
+	RefreshCaptcha(ctype CaptchaType) (id, content string, err error)
 }
 type Store interface {
 	Set(id string, value string, t time.Duration) error
@@ -20,12 +30,4 @@ type Driver interface {
 	GenerateDriverMathString() (content, answer string, err error)
 	GenerateDriverMath() (content, answer string)
 	GenerateDriverPuzzle() (bgImage string, puzzleImage string, targetX int, err error)
-}
-
-// Item is captcha item inter
-type Image interface {
-	//WriteTo writes to a writer
-	WriteTo(w io.Writer) (n int64, err error)
-	//EncodeB64string encodes as base64 string
-	EncodeB64string() string
 }

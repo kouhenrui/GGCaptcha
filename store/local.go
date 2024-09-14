@@ -9,8 +9,8 @@ import (
 )
 
 type LocalStore struct {
-	Item sync.Map
-	Lock sync.Mutex
+	item sync.Map
+	lock sync.Mutex
 }
 type cache struct {
 	Value string
@@ -26,28 +26,28 @@ func newcache(value string, t time.Duration) *cache {
 }
 func NewLocalStore() *LocalStore {
 	return &LocalStore{
-		Item: sync.Map{},
-		Lock: sync.Mutex{},
+		item: sync.Map{},
+		lock: sync.Mutex{},
 	}
 }
 func (l *LocalStore) Set(id string, value string, t time.Duration) error {
-	l.Lock.Lock()
-	defer l.Lock.Unlock()
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	cach := newcache(value, t)
-	l.Item.Store(id, cach)
+	l.item.Store(id, cach)
 	return nil
 }
 func (l *LocalStore) Exist(id string) bool {
-	_, ok := l.Item.Load(id)
+	_, ok := l.item.Load(id)
 	return ok
 }
 func (l *LocalStore) Get(id string, clear bool) (string, error) {
 	if l.Exist(id) {
-		value, _ := l.Item.Load(id)
+		value, _ := l.item.Load(id)
 		cacheItem := value.(*cache)
 		// 检查是否过期
 		if time.Now().UnixNano() > cacheItem.T || clear {
-			l.Item.Delete(id)
+			l.item.Delete(id)
 			return "", errors.New("缓存已过期")
 		}
 		return cacheItem.Value, nil
