@@ -1,11 +1,11 @@
 package img
 
 import (
-	"GGCaptcha/utils"
 	"bytes"
 	"encoding/base64"
 	"fmt"
 	"github.com/fogleman/gg"
+	"github.com/kouhenrui/GGCaptcha/utils"
 	"golang.org/x/image/font"
 	"image"
 	"image/color"
@@ -379,9 +379,11 @@ func (m *Img) interfereLine(dc *gg.Context) {
  * @Date 2024/9/10
  */
 func (m *Img) writeText(dc *gg.Context, text string) {
+	log.Println(text)
 	// 获取文字的字符数组
 	characters := []rune(text)
 	charCount := len(characters)
+	log.Println(charCount, "字符长度")
 	// 每个字符的水平间距
 	charSpacing := float64(m.Width) / float64(charCount+1)
 	for i := 0; i < charCount; i++ {
@@ -404,18 +406,10 @@ func (m *Img) writeText(dc *gg.Context, text string) {
 
 		// 恢复原来的旋转角度，避免影响后面的字符
 		dc.RotateAbout(gg.Radians(-rotation), x, y)
-		//x := float64(m.Width/m.SourceLength*i) + m.SizePoint*0.6
-		//y := float64(m.Height / 2)
-		//xfload := 5 - rand.Float64()*10 + x
-		//yfload := 5 - rand.Float64()*10 + y
-		//radians := 40 - rand.Float64()*80
-		//dc.RotateAbout(gg.Radians(radians), x, y)
-		//dc.DrawStringAnchored(text, xfload, yfload, 0.2, 0.5)
-		//dc.RotateAbout(-1*gg.Radians(radians), x, y)
 		dc.Stroke()
 
 	}
-	dc.Clear()
+	//dc.Clear()
 }
 
 /*
