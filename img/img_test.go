@@ -1,7 +1,7 @@
 package img
 
 import (
-	"GGCaptcha/utils"
+	"github.com/kouhenrui/GGCaptcha/utils"
 	"testing"
 )
 
