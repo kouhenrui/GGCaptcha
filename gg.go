@@ -1,8 +1,8 @@
 package GGCaptcha
 
 import (
-	"GGCaptcha/inter"
-	"GGCaptcha/utils"
+	"github.com/kouhenrui/GGCaptcha/inter"
+	"github.com/kouhenrui/GGCaptcha/utils"
 	"strconv"
 	"time"
 )
