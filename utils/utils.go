@@ -88,23 +88,11 @@ func RandMath(n int) (expression string, answer string) {
 	// 定义可用的运算符
 	operators := []string{"+", "-", "*", "/"}
 
-	for i := 1; i < n; i++ {
+	for i := 0; i < n; i++ {
 		// 随机选择一个运算符
 		operator := operators[rand.Intn(4)]
 
-		// 随机选择一个数字
-		var nextNum int
-		if operator == "/" {
-			// 对于除法，确保能够整除
-			nextNum = rand.Intn(9) + 1 // 避免除数为0
-			// 确保除法不会导致负结果
-			if result < 0 {
-				nextNum = rand.Intn(9) + 1
-				result *= nextNum
-			}
-		} else {
-			nextNum = rand.Intn(9) + 1 // 避免为0
-		}
+		nextNum := rand.Intn(9) + 1 // 避免除数为0
 
 		// 根据操作符更新结果
 		switch operator {
@@ -113,33 +101,28 @@ func RandMath(n int) (expression string, answer string) {
 		case "-":
 			// 确保减法后结果为非负数
 			if result-nextNum < 0 {
-				// 如果减法会导致负数，重新选择一个操作数
-				nextNum = result
+				for result-nextNum < 0 {
+					nextNum = rand.Intn(9) + 1
+				}
 			}
 			result -= nextNum
 		case "*":
 			result *= nextNum
 		case "/":
 			// 仅在除法时更新结果
-			// 仅在除法时更新结果
 			if result%nextNum != 0 {
-				// 确保结果整除
-				result += nextNum - (result % nextNum)
+				for result%nextNum != 0 {
+					nextNum = rand.Intn(10) + 1
+				}
 			}
 			result /= nextNum
 		}
 
 		// 构建表达式
-		expression += fmt.Sprintf("%s%d", operator, nextNum)
+		expression = fmt.Sprintf("(%s%s%d)", expression, operator, nextNum)
 	}
 
-	//// 确保除法后的结果是整数
-	//if len(expression) > 0 && expression[len(expression)-1] == '/' {
-	//	// 如果最后一个操作符是除法，修正结果
-	//	expression = expression[:len(expression)-1] // 移除最后的除法符号
-	//}
-
-	expression += "="
+	expression += fmt.Sprintf("%s", "=")
 	answer = strconv.Itoa(result)
 	return expression, answer
 }
@@ -151,33 +134,32 @@ func RandMath2() (expression string, answer string) {
 	expression = fmt.Sprintf("%d", num)
 	result := num
 	// 定义可用的运算符
-	operators := []string{"+", "-", "*", "/"}
+	operators := []string{"+", "*", "-", "/"}
 	operator := operators[rand.Intn(len(operators))]
-	var nextNum = rand.Intn(20) + 1
-	if result < nextNum {
-		if operator == "/" {
-			// 仅在除法时更新结果
-			for result%nextNum != 0 {
-				nextNum--
-			}
-			//if result%nextNum != 0 {
-			//	select {
-			//		case result  +=1:
-			//		if result%nextNum == 0 {
-			//			break
-			//		}
-			//	}
-			//	// 确保结果整除
-			//	result += nextNum - (result % nextNum)
-			//}
-			result /= nextNum
-		}
-	}
-	result = nextNum
-	// 构建表达式
-	expression += fmt.Sprintf("%s%d", operator, nextNum)
+	var nextNum = rand.Intn(10) + 1
 
-	expression += "="
+	switch operator {
+	case "+":
+		result += nextNum
+	case "-":
+		if result-nextNum < 0 {
+			for result-nextNum < 0 {
+				nextNum = rand.Intn(10) + 1
+			}
+		}
+		result -= nextNum
+	case "*":
+		result *= nextNum
+	case "/":
+		if result%nextNum != 0 {
+			for result%nextNum != 0 {
+				nextNum = rand.Intn(10) + 1
+			}
+		}
+		result /= nextNum
+	}
+	// 构建表达式
+	expression += fmt.Sprintf("%s%d%s", operator, nextNum, "=")
 	answer = strconv.Itoa(result)
 	return expression, answer
 }
