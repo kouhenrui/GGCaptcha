@@ -30,7 +30,6 @@ type Img struct {
 	BgColor      color.NRGBA //背景颜色
 	FontStyle    font.Face   //字体
 	UploadImg    image.Image
-
 	MathNum      int //算术验证码数量
 	PuzzleX      int // 滑动拼图的X位置
 	PuzzleY      int // 滑动拼图的Y位置
