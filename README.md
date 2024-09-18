@@ -2,6 +2,7 @@
 使用gg图像库和Redis以及本地缓存封装的验证码组件,包含简单数式计算验证、图片字符验证、图片数式计算验证和滑动图片验证。
 支持使用自定义图片或使用本组件默认图片参数
 ```
+	driver := GGCaptcha.NewDriverString()
 	localStore := GGCaptcha.NewLocalStore()
 	redisOption := GGCaptcha.RedisOptions{
 		Host:     "192.168.245.22",
@@ -11,13 +12,26 @@
 		MaxRetry: 5,
 	}
 use default captcha for example(使用默认参数示例)
-	driver := GGCaptcha.NewDriverString()
 	redisStore := GGCaptcha.NewRediStore(redisOption)
 	ggcaptcha := GGCaptcha.NewGGCaptcha(driver, redisStore)
 	id, content, err := ggcaptcha.GenerateGGCaptcha()
 
-use img as background
+use img as background(使用自定义背景图片)
 	img := GGCaptcha.LoadLocalImg("../utils/dark.png")
-	driver := GGCaptcha.NewDriverString(img)
 	content, answer, err := GGCaptcha.GenerateDriverString()
+
+use string verify(使用算数验证，直接返回字符类型算术式)
+	ggcaptcha := GGCaptcha.NewGGCaptcha(driver, localstore, time.Minute)
+	id, content, err := ggcaptcha.GenerateGGCaptcha()
+
+use  string math(使用算术式图片验证，返回图片)
+	ggcaptcha := GGCaptcha.NewGGCaptcha(driver, localstore, time.Minute)
+	id, content, err := ggcaptcha.GenerateDriverMathString()
+
+use puzzle verify(使用滑动验证码验证)
+	ggcaptcha := GGCaptcha.NewGGCaptcha(driver, localstore, time.Minute)
+	id, bgImage, puzzleImage, err := ggcaptcha.GenerateDriverPuzzle()
+
+use verify_function verify code(验证密钥是否正确，是否清除)
+	ggcaptcha.VerifyGGCaptcha(id,answer,true) 
 ```
