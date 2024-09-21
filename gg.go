@@ -24,11 +24,13 @@ import (
 )
 
 type GGCaptcha struct {
-	driver  inter.Driver
-	store   inter.Store
-	exptime time.Duration
-	//windowTime time.Duration
-	//limit      int
+	driver     inter.Driver           //验证码驱动
+	store      inter.Store            //存储机制
+	exptime    time.Duration          //过期时间
+	windowTime time.Duration          //限制生成验证码的时间窗口
+	limit      int                    //时间窗口内最大验证码数量
+	mu         sync.Mutex             //并发安全控制
+	requests   map[string][]time.Time //记录客户端请求时间戳
 }
 
 type CaptchaType = string
@@ -40,12 +42,39 @@ const (
 	PuzzleCaptcha     CaptchaType = "DriverPuzzle"
 )
 
-func NewGGCaptcha(driver inter.Driver, store inter.Store, t time.Duration) *GGCaptcha {
+func NewGGCaptcha(driver inter.Driver, store inter.Store, t time.Duration, windowTime time.Duration, limit int) *GGCaptcha {
 	return &GGCaptcha{
-		driver:  driver,
-		store:   store,
-		exptime: t,
+		driver:     driver,
+		store:      store,
+		exptime:    t,
+		windowTime: windowTime,
+		limit:      limit,
+		requests:   make(map[string][]time.Time),
 	}
+}
+
+func (g *GGCaptcha) checkLimit(clientID string, now time.Time) bool {
+	timestamps := g.requests[clientID]
+
+	//清理过期的请求记录
+	newTimestamps := make([]time.Time, 0)
+	for _, y := range timestamps {
+		if now.Sub(y) <= g.windowTime {
+			newTimestamps = append(newTimestamps, y)
+		}
+	}
+
+	//更新记录
+	g.requests[clientID] = newTimestamps
+
+	//判断是否超过限制
+	if len(newTimestamps) >= g.limit {
+		return false
+	}
+
+	//添加当前请求时间戳
+	g.requests[clientID] = append(g.requests[clientID], now)
+	return true
 }
 
 func (g *GGCaptcha) GenerateGGCaptcha() (id, content string, err error) {
@@ -60,6 +89,7 @@ func (g *GGCaptcha) GenerateGGCaptcha() (id, content string, err error) {
 	}
 	return id, content, nil
 }
+
 func (g *GGCaptcha) VerifyGGCaptcha(id, answer string, clear bool) bool {
 	return g.store.Verify(id, answer, clear)
 }
@@ -135,6 +165,7 @@ func (g *GGCaptcha) GenerateDriverPuzzle() (id, bgImage, puzzleImage string, err
  * @Author Acer
  * @Date 2024/9/14
  */
+
 func (g *GGCaptcha) RefreshCaptcha(ctype CaptchaType) (id, content string, err error) {
 	switch ctype {
 	case StringCaptcha:

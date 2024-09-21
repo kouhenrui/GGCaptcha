@@ -23,6 +23,7 @@ import (
  * @Author Acer
  * @Date 2024/9/13
  */
+
 func SaveBase64(base, outPath string) error {
 	//if strings.Contains(base, "base64,") {
 	//	base = strings.Split(base, "base64,")[1]
@@ -41,6 +42,7 @@ func SaveBase64(base, outPath string) error {
 }
 
 // 加载字体
+
 func LoadDefaultFontFace() font.Face {
 	// 使用 Go 自带的字体，也可以使用本地字体文件
 	ttf, err := opentype.Parse(goregular.TTF)
@@ -54,6 +56,7 @@ func LoadDefaultFontFace() font.Face {
 	})
 	return face
 }
+
 func LoadFont(fontPath string, sizePoint float64) font.Face {
 	// 读取自定义字体文件
 	fontBytes, err := os.ReadFile(fontPath)
@@ -78,6 +81,7 @@ func LoadFont(fontPath string, sizePoint float64) font.Face {
 }
 
 // 随机算术
+
 func RandMath(n int) (expression string, answer string) {
 	rand.NewSource(time.Now().UnixNano())
 	// 初始化第一个数字
@@ -165,6 +169,7 @@ func RandMath2() (expression string, answer string) {
 }
 
 // 随机字符
+
 func RandStr(n int) (randStr string) {
 	chars := "ABCDEFGHIJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
 	charsLen := len(chars)
@@ -180,6 +185,7 @@ func RandStr(n int) (randStr string) {
 }
 
 // 随机颜色
+
 func RandColor(maxColor int) (r, g, b, a int) {
 	r = int(uint8(rand.Intn(maxColor)))
 	g = int(uint8(rand.Intn(maxColor)))
@@ -187,6 +193,7 @@ func RandColor(maxColor int) (r, g, b, a int) {
 	a = int(uint8(rand.Intn(255)))
 	return r, g, b, a
 }
+
 func RandColorRGBA(maxColor int) (c color.NRGBA) {
 	c.R = uint8(rand.Intn(maxColor))
 	c.G = uint8(rand.Intn(maxColor))
@@ -196,6 +203,7 @@ func RandColorRGBA(maxColor int) (c color.NRGBA) {
 }
 
 // 随机坐标
+
 func RandPos(width, height int) (x float64, y float64) {
 	x = rand.Float64() * float64(width)
 	y = rand.Float64() * float64(height)
@@ -203,6 +211,7 @@ func RandPos(width, height int) (x float64, y float64) {
 }
 
 // 随机颜色范围
+
 func RandColorRange(miniColor, maxColor int) (r, g, b, a int) {
 	if miniColor > maxColor {
 		miniColor = 0

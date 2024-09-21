@@ -38,10 +38,12 @@ func (l *LocalStore) Set(id string, value string, t time.Duration) error {
 	l.Item.Store(id, cach)
 	return nil
 }
+
 func (l *LocalStore) Exist(id string) bool {
 	_, ok := l.Item.Load(id)
 	return ok
 }
+
 func (l *LocalStore) Get(id string, clear bool) (string, error) {
 	if l.Exist(id) {
 		value, _ := l.Item.Load(id)
@@ -56,6 +58,7 @@ func (l *LocalStore) Get(id string, clear bool) (string, error) {
 		return "", nil
 	}
 }
+
 func (l *LocalStore) Verify(id, answer string, clear bool) bool {
 	value, err := l.Get(id, clear)
 	log.Println(value)

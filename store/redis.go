@@ -3,11 +3,13 @@ package store
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
+	"sync"
 	"time"
 )
 
 type RediStore struct {
 	Store *redis.Client
+	mu    sync.Mutex
 }
 
 //type RedisOptions struct {
@@ -34,11 +36,16 @@ type RediStore struct {
 //		}
 //		return &RediStore{Store: redisClients}
 //	}
+
 func (r *RediStore) Set(id string, value string, t time.Duration) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	return r.Store.Set(context.TODO(), id, []byte(value), t).Err()
 }
 
 func (r *RediStore) Get(id string, clear bool) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	err := r.Store.Exists(context.TODO(), id).Err()
 	if err != nil {
 		return "", err
@@ -52,6 +59,7 @@ func (r *RediStore) Get(id string, clear bool) (string, error) {
 	}
 	return value, nil
 }
+
 func (r *RediStore) Verify(id, answer string, clear bool) bool {
 	if r.Exist(id) {
 		value, err := r.Get(id, clear)
@@ -65,6 +73,7 @@ func (r *RediStore) Verify(id, answer string, clear bool) bool {
 	}
 	return false
 }
+
 func (r *RediStore) Exist(id string) bool {
 	_, err := r.Store.Exists(context.TODO(), id).Result()
 	if err != nil {
