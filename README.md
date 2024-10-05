@@ -33,5 +33,22 @@ use puzzle verify(使用滑动验证码验证)
 	id, bgImage, puzzleImage, err := ggcaptcha.GenerateDriverPuzzle()
 
 use verify_function verify code(验证密钥是否正确，是否清除)
-	ggcaptcha.VerifyGGCaptcha(id,answer,true) 
+	ggcaptcha.VerifyGGCaptcha(id,answer,true)
+
+
+使用代码生成器
+	table := Table{
+		Name: "account",
+		Fields: []Field{
+			{Name: ToCamelCase("phone"), Type: "int", Nullable: false, GormTag: "comment:'phone'", Validate: "required", JsonTag: "phone,omitempty"},
+			{Name: ToCamelCase("name"), Type: "varchar", Nullable: false, GormTag: "comment:'用户名'", Validate: "required", JsonTag: "name,omitempty"},
+			{Name: ToCamelCase("email"), Type: "varchar", Nullable: true, GormTag: "comment:'邮箱'", Validate: "email", JsonTag: "email,omitempty"},
+			{Name: ToCamelCase("password"), Type: "varchar", Nullable: false, GormTag: "comment:'hash密码'", JsonTag: "password"},
+			{Name: ToCamelCase("salt"), Type: "varchar", Nullable: false, GormTag: "comment:'加密盐'", JsonTag: "salt"},
+		},
+	}
+	err := GenerateCode.Generate(table)
+	if err != nil {
+		t.Fatalf("生成文件错误%s", err)
+	}
 ```
