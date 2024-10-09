@@ -33,15 +33,6 @@ type GGCaptcha struct {
 	requests   map[string][]time.Time //记录客户端请求时间戳
 }
 
-type CaptchaType = string
-
-const (
-	StringCaptcha     CaptchaType = "DriverString"
-	MathCaptcha       CaptchaType = "DriverMath"
-	MathStringCaptcha CaptchaType = "DriverMathString"
-	PuzzleCaptcha     CaptchaType = "DriverPuzzle"
-)
-
 func NewGGCaptcha(driver inter.Driver, store inter.Store, t time.Duration, windowTime time.Duration, limit int) *GGCaptcha {
 	return &GGCaptcha{
 		driver:     driver,
@@ -166,13 +157,13 @@ func (g *GGCaptcha) GenerateDriverPuzzle() (id, bgImage, puzzleImage string, err
  * @Date 2024/9/14
  */
 
-func (g *GGCaptcha) RefreshCaptcha(ctype CaptchaType) (id, content string, err error) {
+func (g *GGCaptcha) RefreshCaptcha(ctype inter.CaptchaType) (id, content string, err error) {
 	switch ctype {
-	case StringCaptcha:
+	case inter.StringCaptcha:
 		id, content, err = g.GenerateGGCaptcha()
-	case MathCaptcha:
+	case inter.MathCaptcha:
 		id, content, err = g.GenerateDriverMath()
-	case MathStringCaptcha:
+	case inter.MathStringCaptcha:
 		id, content, err = g.GenerateDriverMathString()
 	}
 	return id, content, err

@@ -1,11 +1,18 @@
 package inter
 
 import (
-	"github.com/kouhenrui/GGCaptcha"
 	"time"
 )
 
-type CaptchaType = GGCaptcha.CaptchaType
+// type CaptchaType GGCaptcha.CaptchaType
+type CaptchaType = string
+
+const (
+	StringCaptcha     CaptchaType = "DriverString"
+	MathCaptcha       CaptchaType = "DriverMath"
+	MathStringCaptcha CaptchaType = "DriverMathString"
+	PuzzleCaptcha     CaptchaType = "DriverPuzzle"
+)
 
 type GGCaptchator interface {
 	GenerateGGCaptcha() (id, content string, err error)
