@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// type CaptchaType GGCaptcha.CaptchaType
+// CaptchaType type CaptchaType GGCaptcha.CaptchaType
 type CaptchaType = string
 
 const (

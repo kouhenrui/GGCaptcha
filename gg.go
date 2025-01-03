@@ -76,6 +76,8 @@ func (g *GGCaptcha) GenerateGGCaptcha() (id, content string, err error) {
 	id = utils.RandStr(8)
 	//写入结果区分大小写
 	err = g.store.Set(id, answer, g.exptime)
+
+	log.Println("结果", answer)
 	if err != nil {
 		return "", "", err
 	}
@@ -211,13 +213,13 @@ func defaultImg() img.Img {
 	var puzzleX = rand.Intn(width - width/5 - 10)   // 随机生成X坐标，预留边距
 	var puzzleY = rand.Intn(height - height/5 - 10) // 随机生成Y坐标，预留边距
 	return img.Img{
-		Height:       height,             // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
-		Width:        width,              // 宽度设置为240像素，适合4-6个字符的验证码
-		NoiseCount:   noiseCount,         // 5条干扰线，增强防破解性，但不影响阅读
-		Count:        count,              // 验证码字符数量设置为5个，平衡安全性和用户友好性
-		Source:       source,             // 排除容易混淆的字符如 'O', '0', 'I', 'l'
-		SourceLength: sourceLength,       // 数据源字符长度
-		SizePoint:    float64(sizePoint), // 字体大小设置为36，保证字符清晰度
+		Height:       height,       // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
+		Width:        width,        // 宽度设置为240像素，适合4-6个字符的验证码
+		NoiseCount:   noiseCount,   // 5条干扰线，增强防破解性，但不影响阅读
+		Count:        count,        // 验证码字符数量设置为5个，平衡安全性和用户友好性
+		Source:       source,       // 排除容易混淆的字符如 'O', '0', 'I', 'l'
+		SourceLength: sourceLength, // 数据源字符长度
+		SizePoint:    sizePoint,    // 字体大小设置为36，保证字符清晰度
 		FontColor:    fontColor,
 		BgColor:      bgColor,
 		FontStyle:    fontStyle,
@@ -240,31 +242,61 @@ func defaultImg() img.Img {
  * @Date 2024/9/13
  */
 
-func LoadLocalImg(imgPath string) img.Img {
+func LoadLocalImg(imgPath string) (*img.Img, error) {
+	log.Printf("加载图片: %s", imgPath)
+
 	// 打开图片文件
 	file, err := os.Open(imgPath)
 	if err != nil {
-		log.Fatalf("无法打开图片文件: %v", err)
+		return nil, fmt.Errorf("无法打开图片文件: %w", err)
 	}
 	defer file.Close()
-	var imgs image.Image
-	// 获取文件扩展名，判断图片格式
+
+	// 根据扩展名选择解码方式
 	ext := strings.ToLower(filepath.Ext(imgPath))
+	var imgs image.Image
+
 	switch ext {
 	case ".jpg", ".jpeg":
 		imgs, err = jpeg.Decode(file)
-		if err != nil {
-			log.Fatalf("JPEG 解码失败: %v", err)
-		}
 	case ".png":
 		imgs, err = png.Decode(file)
-		if err != nil {
-			log.Fatalf("PNG 解码失败: %v", err)
-		}
 	default:
-		log.Fatalf("不支持的图片格式: %s", ext)
+		return nil, fmt.Errorf("不支持的图片格式: %s", ext)
 	}
-	return img.Img{UploadImg: imgs}
+
+	if err != nil {
+		return nil, fmt.Errorf("图片解码失败 (%s): %w", ext, err)
+	}
+	// 获取图片宽度和高度
+	bounds := imgs.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	log.Printf("图片加载成功，宽度: %d, 高度: %d", width, height)
+
+	// 初始化 Img 结构体
+	var i = &img.Img{
+		UploadImg:    imgs,
+		FontColor:    utils.RandColorRGBA(255),    // 随机字体颜色
+		BgColor:      utils.RandColorRGBA(255),    // 随机背景颜色
+		FontStyle:    utils.LoadDefaultFontFace(), // 默认字体
+		Count:        5,                           // 默认验证码字符数量
+		Width:        width,                       // 从图片获取宽度
+		Height:       height,                      // 从图片获取高度
+		SizePoint:    float64(height) * 0.2,       // 动态计算字体大小（高度的20%）
+		NoiseCount:   3,                           // 默认干扰线数量
+		PuzzleWidth:  width / 5,                   // 拼图宽度为图片宽度的1/5
+		PuzzleHeight: height / 5,                  // 拼图高度为图片高度的1/5
+	}
+	//log.Println(imgs, "2222")
+	//var i = &img.Img{UploadImg: imgs,
+	//	FontColor: utils.RandColorRGBA(255),
+	//	BgColor:   utils.RandColorRGBA(255),
+	//	FontStyle: utils.LoadDefaultFontFace(),
+	//	Count:     5,
+	//}
+	return i, nil
 }
 
 /*

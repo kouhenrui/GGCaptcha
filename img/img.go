@@ -73,13 +73,13 @@ func DefaultImg() Img {
 	var puzzleX = rand.Intn(width - width/5 - 10)   // 随机生成X坐标，预留边距
 	var puzzleY = rand.Intn(height - height/5 - 10) // 随机生成Y坐标，预留边距
 	return Img{
-		Height:       height,             // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
-		Width:        width,              // 宽度设置为240像素，适合4-6个字符的验证码
-		NoiseCount:   noiseCount,         // 5条干扰线，增强防破解性，但不影响阅读
-		Count:        count,              // 验证码字符数量设置为5个，平衡安全性和用户友好性
-		Source:       source,             // 排除容易混淆的字符如 'O', '0', 'I', 'l'
-		SourceLength: sourceLength,       // 数据源字符长度
-		SizePoint:    float64(sizePoint), // 字体大小设置为36，保证字符清晰度
+		Height:       height,       // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
+		Width:        width,        // 宽度设置为240像素，适合4-6个字符的验证码
+		NoiseCount:   noiseCount,   // 5条干扰线，增强防破解性，但不影响阅读
+		Count:        count,        // 验证码字符数量设置为5个，平衡安全性和用户友好性
+		Source:       source,       // 排除容易混淆的字符如 'O', '0', 'I', 'l'
+		SourceLength: sourceLength, // 数据源字符长度
+		SizePoint:    sizePoint,    // 字体大小设置为36，保证字符清晰度
 		FontColor:    fontColor,
 		BgColor:      bgColor,
 		FontStyle:    fontStyle,
@@ -102,7 +102,7 @@ func DefaultImg() Img {
  * @Date 2024/9/13
  */
 
-func LoadLocalImg(imgPath string) Img {
+func LoadLocalImg(imgPath string) *Img {
 	// 打开图片文件
 	file, err := os.Open(imgPath)
 	if err != nil {
@@ -126,7 +126,7 @@ func LoadLocalImg(imgPath string) Img {
 	default:
 		log.Fatalf("不支持的图片格式: %s", ext)
 	}
-	return Img{UploadImg: img}
+	return &Img{UploadImg: img}
 }
 func NewDriverString(imgOptions ...Img) *Img {
 	var i Img
@@ -200,12 +200,13 @@ func (m *Img) GenerateDriverString() (content, answer string, err error) {
 	textPlain := utils.RandStr(m.Count)
 
 	var dc *gg.Context
+	//log.Println(m.UploadImg, "上传的图片")
 	if m.UploadImg != nil {
 		dc = gg.NewContextForImage(m.UploadImg)
 	} else {
 		dc = m.makeBGColor()
 	}
-
+	log.Println(dc, "cd")
 	dc.SetFontFace(m.FontStyle) //设置字体格式
 	dc.SetColor(m.FontColor)    //设置字体颜色
 	m.writeText(dc, textPlain)  //绘制验证码图片

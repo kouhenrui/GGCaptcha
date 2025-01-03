@@ -6,13 +6,29 @@ import (
 	"time"
 )
 
+func TestUploadImg(t *testing.T) {
+	driver, err := LoadLocalImg("dark.png")
+	if err != nil {
+		t.Error(err)
+	}
+	localStore := NewLocalStore()
+
+	ggcaptcha := NewGGCaptcha(driver, localStore, 1*time.Minute, 10*time.Minute, 50)
+	id, content, err := ggcaptcha.GenerateGGCaptcha()
+
+	if err != nil {
+		t.Fatalf("生成文件错误%s", err)
+	}
+	t.Log(id, content)
+}
+
 func TestNewGGCaptcha(t *testing.T) {
 	driver := NewDriverString()
 
 	//UserName := "root"
 	//Password := "123456"
 	//redisOption := RedisOptions{
-	//	Host: "121.43.227.159", //"r-bp1dh88jq0pzv6tudo.redis.rds.aliyuncs.com",
+	//	Host: "192.168.255.2", //"r-bp1dh88jq0pzv6tudo.redis.rds.aliyuncs.com",
 	//	Port: "6379",
 	//	//UserName: &UserName,
 	//	Password: &Password,
