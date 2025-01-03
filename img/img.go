@@ -37,24 +37,24 @@ type Img struct {
 	PuzzleHeight int // 拼图块的高度
 }
 
-type ImgOptions struct {
-	Height       int         //图片高度
-	Width        int         //图片宽度
-	NoiseCount   int         //干扰线
-	Count        int         //验证码数量
-	Source       string      //数据源
-	SourceLength int         //数据源长度
-	SizePoint    float64     //字体大小
-	Bgcolor      color.NRGBA //背景颜色
-	FontStyle    font.Face   //字体
-	UploadImg    image.Image
-
-	MathNum      int //算术验证码数量
-	PuzzleX      int // 滑动拼图的X位置
-	PuzzleY      int // 滑动拼图的Y位置
-	PuzzleWidth  int // 拼图块的宽度
-	PuzzleHeight int // 拼图块的高度
-}
+//type ImgOptions struct {
+//	Height       int         //图片高度
+//	Width        int         //图片宽度
+//	NoiseCount   int         //干扰线
+//	Count        int         //验证码数量
+//	Source       string      //数据源
+//	SourceLength int         //数据源长度
+//	SizePoint    float64     //字体大小
+//	Bgcolor      color.NRGBA //背景颜色
+//	FontStyle    font.Face   //字体
+//	UploadImg    image.Image
+//
+//	MathNum      int //算术验证码数量
+//	PuzzleX      int // 滑动拼图的X位置
+//	PuzzleY      int // 滑动拼图的Y位置
+//	PuzzleWidth  int // 拼图块的宽度
+//	PuzzleHeight int // 拼图块的高度
+//}
 
 func DefaultImg() Img {
 	var height = 80                                                           // 高度设置为80像素，确保有足够的空间容纳验证码和干扰
@@ -378,11 +378,11 @@ func (m *Img) interfereLine(dc *gg.Context) {
  * @Date 2024/9/10
  */
 func (m *Img) writeText(dc *gg.Context, text string) {
-	log.Println(text)
+	//log.Println(text)
 	// 获取文字的字符数组
 	characters := []rune(text)
 	charCount := len(characters)
-	log.Println(charCount, "字符长度")
+	//log.Println(charCount, "字符长度")
 	// 每个字符的水平间距
 	charSpacing := float64(m.Width) / float64(charCount+1)
 	for i := 0; i < charCount; i++ {

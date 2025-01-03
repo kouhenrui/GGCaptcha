@@ -2,7 +2,10 @@ package store
 
 import (
 	"context"
+	"errors"
 	"github.com/go-redis/redis/v8"
+	"log"
+	"strings"
 	"sync"
 	"time"
 )
@@ -60,18 +63,18 @@ func (r *RediStore) Get(id string, clear bool) (string, error) {
 	return value, nil
 }
 
-func (r *RediStore) Verify(id, answer string, clear bool) bool {
-	if r.Exist(id) {
-		value, err := r.Get(id, clear)
-		if err != nil {
-			return false
-		}
-		if answer == value {
-			return true
-		}
-		return false
+func (r *RediStore) Verify(id, answer string, clear bool) (bool, error) {
+
+	value, err := r.Get(id, clear)
+	log.Println(value)
+	if err != nil || value == "" {
+		return false, err
 	}
-	return false
+
+	if strings.EqualFold(answer, value) {
+		return true, nil
+	}
+	return false, errors.New("验证码错误")
 }
 
 func (r *RediStore) Exist(id string) bool {

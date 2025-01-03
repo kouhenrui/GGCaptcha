@@ -8,16 +8,21 @@ import (
 
 func TestNewGGCaptcha(t *testing.T) {
 	driver := NewDriverString()
-	redisOption := RedisOptions{
-		Host:     "192.168.245.22",
-		Port:     "6379",
-		Db:       4,
-		PoolSize: 10,
-		MaxRetry: 5,
-	}
-	redisStore := NewRediStore(redisOption)
-	//localStore := store.NewLocalStore()
-	ggcaptcha := NewGGCaptcha(driver, redisStore, 1*time.Minute, 10*time.Minute, 50)
+
+	//UserName := "root"
+	//Password := "123456"
+	//redisOption := RedisOptions{
+	//	Host: "121.43.227.159", //"r-bp1dh88jq0pzv6tudo.redis.rds.aliyuncs.com",
+	//	Port: "6379",
+	//	//UserName: &UserName,
+	//	Password: &Password,
+	//	Db:       4,
+	//	PoolSize: 10,
+	//	MaxRetry: 5,
+	//}
+	//redisStore := NewRediStore(redisOption)
+	localStore := NewLocalStore()
+	ggcaptcha := NewGGCaptcha(driver, localStore, 1*time.Minute, 10*time.Minute, 50)
 	id, content, err := ggcaptcha.GenerateGGCaptcha()
 	if err != nil {
 		t.Fatalf("生成文件错误%s", err)
@@ -34,6 +39,14 @@ func Test_GenerateDriverMath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("生成算术验证码错误%s", err)
 	}
+	//time.Sleep(5 * time.Second)
+	//time.Sleep(1 * time.Minute)
+	//verify := "25"
+	//verifyResult, err := ggcaptcha.VerifyGGCaptcha(id, verify, true)
+	//if err != nil {
+	//	t.Error("验证码验证失败", err.Error())
+	//}
+	//t.Log(verifyResult)
 	t.Log(id, content)
 }
 

@@ -51,23 +51,24 @@ func (l *LocalStore) Get(id string, clear bool) (string, error) {
 		// 检查是否过期
 		if time.Now().UnixNano() > cacheItem.T || clear {
 			l.Item.Delete(id)
-			return "", errors.New("缓存已过期")
+			return "", errors.New("验证缓存已过期")
 		}
 		return cacheItem.Value, nil
 	} else {
-		return "", nil
+		return "", errors.New("验证缓存已过期")
 	}
 }
 
-func (l *LocalStore) Verify(id, answer string, clear bool) bool {
+func (l *LocalStore) Verify(id, answer string, clear bool) (bool, error) {
 	value, err := l.Get(id, clear)
 	log.Println(value)
-	if err != nil {
-		return false
+	if err != nil || value == "" {
+		return false, err
 	}
 	if answer == value {
-		return true
+		return true, nil
+	} else {
+		return false, errors.New("验证码错误")
 	}
-	return false
 
 }

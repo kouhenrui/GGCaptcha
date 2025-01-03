@@ -8,6 +8,14 @@ type SMTPClient struct {
 }
 
 // NewSMTPClient 初始化 SMTP 客户端
+/**
+*@Param
+*	smtpHost ip地址
+*	smtpPort 端口号
+*	username 账号
+*	password 密码
+*	from smtp发送者
+ */
 func NewSMTPClient(smtpHost string, smtpPort int, username, password string, from string) *SMTPClient {
 	return &SMTPClient{
 		Dialer: gomail.NewDialer(smtpHost, smtpPort, username, password),

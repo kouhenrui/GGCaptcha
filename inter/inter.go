@@ -39,7 +39,7 @@ type Store interface {
 	Set(id string, value string, t time.Duration) error
 	Exist(id string) bool
 	Get(id string, clear bool) (string, error)
-	Verify(id, answer string, clear bool) bool
+	Verify(id, answer string, clear bool) (bool, error)
 }
 
 /*

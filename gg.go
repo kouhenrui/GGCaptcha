@@ -74,14 +74,16 @@ func (g *GGCaptcha) GenerateGGCaptcha() (id, content string, err error) {
 		return "", "", err
 	}
 	id = utils.RandStr(8)
+	//写入结果区分大小写
 	err = g.store.Set(id, answer, g.exptime)
 	if err != nil {
 		return "", "", err
 	}
+	content = fmt.Sprintf("data:image/png;base64,%s", content)
 	return id, content, nil
 }
 
-func (g *GGCaptcha) VerifyGGCaptcha(id, answer string, clear bool) bool {
+func (g *GGCaptcha) VerifyGGCaptcha(id, answer string, clear bool) (bool, error) {
 	return g.store.Verify(id, answer, clear)
 }
 
@@ -101,6 +103,7 @@ func (g *GGCaptcha) GenerateDriverMath() (id, content string, err error) {
 	if err != nil {
 		return "", "", err
 	}
+	//content = fmt.Sprintf("data:image/png;base64,%s", content)
 	return id, content, nil
 }
 
@@ -123,6 +126,7 @@ func (g *GGCaptcha) GenerateDriverMathString() (id, content string, err error) {
 	if err != nil {
 		return "", "", err
 	}
+	content = fmt.Sprintf("data:image/png;base64,%s", content)
 	return id, content, nil
 }
 
@@ -145,6 +149,8 @@ func (g *GGCaptcha) GenerateDriverPuzzle() (id, bgImage, puzzleImage string, err
 	if err != nil {
 		return "", "", "", err
 	}
+	bgImage = fmt.Sprintf("data:image/*;base64,%s", bgImage)
+	puzzleImage = fmt.Sprintf("data:image/*;base64,%s", puzzleImage)
 	return id, bgImage, puzzleImage, nil
 }
 
@@ -333,6 +339,8 @@ func NewDriverString(imgOptions ...img.Img) *img.Img {
 type RedisOptions struct {
 	Host     string
 	Port     string
+	UserName *string
+	Password *string
 	Db       int
 	PoolSize int
 	MaxRetry int
@@ -348,14 +356,30 @@ type RedisOptions struct {
  */
 
 func NewRediStore(option RedisOptions) *store.RediStore {
-	redisClients := redis.NewClient(&redis.Options{
-		Addr: option.Host + ":" + option.Port,
-		//Username:   redisCon.UserName,
-		//Password:   redisCon.PassWord,
+	if option.Db == 0 {
+		option.Db = 0
+	}
+	if option.PoolSize == 0 {
+		option.PoolSize = 10
+	}
+	if option.MaxRetry == 0 {
+		option.MaxRetry = 5
+	}
+	options := &redis.Options{
+		Addr:       option.Host + ":" + option.Port,
 		DB:         option.Db,
 		PoolSize:   option.PoolSize,
 		MaxRetries: option.MaxRetry,
-	})
+	}
+	if option.UserName != nil {
+		options.Username = *option.UserName
+	}
+	if option.Password != nil {
+		options.Password = *option.Password
+	}
+	redisClients := redis.NewClient(options)
+
+	fmt.Println(redisClients, "连接参数")
 	_, err := redisClients.Ping(context.Background()).Result()
 	if err != nil {
 		log.Printf("redis connect times over %v,please check %v\n", option.MaxRetry, err.Error())
